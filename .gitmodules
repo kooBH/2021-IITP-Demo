@@ -1,3 +1,30 @@
 [submodule "algorithm/multi_source_CDR_MLDR"]
 	path = algorithm/multi_source_CDR_MLDR
 	url = https://github.com/bestjunh/multi_source_CDR_MLDR.git
+[submodule "lib/STFT"]
+	path = lib/STFT
+	url = https://github.com/koobh/STFT
+[submodule "lib/WAV"]
+	path = lib/WAV
+	url = https://github.com/koobh/WAV
+[submodule "lib/RtAudioWrapper"]
+	path = lib/RtAudioWrapper
+	url = https://github.com/koobh/RtAudioWrapper
+[submodule "bin"]
+	path = bin
+	url = https://github.com/koobh/QtBin
+[submodule "lib/KSpectrogram"]
+	path = lib/KSpectrogram
+	url = https://github.com/kooBH/KSpectrogram
+[submodule "lib/KWidgetASR"]
+	path = lib/KWidgetASR
+	url = https://github.com/kooBH/KWidgetASR
+[submodule "lib/json"]
+	path = lib/json
+	url = https://github.com/nlohmann/json
+[submodule "lib/jsonConfig"]
+	path = lib/jsonConfig
+	url = https://github.com/kooBH/jsonConfig
+[submodule "lib/Audio-Recorder"]
+	path = lib/Audio-Recorder
+	url = https://github.com/kooBH/Audio-Recorder
