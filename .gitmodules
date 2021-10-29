@@ -28,3 +28,12 @@
 [submodule "lib/Audio-Recorder"]
 	path = lib/Audio-Recorder
 	url = https://github.com/kooBH/Audio-Recorder
+[submodule "lib/JSonConfig"]
+	path = lib/JSonConfig
+	url = https://github.com/kooBH/KJsonConfig
+[submodule "lib/KJsonConfig"]
+	path = lib/KJsonConfig
+	url = https://github.com/kooBH/KJsonConfig
+[submodule "algorithm/multi_source_CDR_IVA_MLDR"]
+	path = algorithm/multi_source_CDR_IVA_MLDR
+	url = https://github.com/bestjunh/multi_source_CDR_IVA_MLDR
