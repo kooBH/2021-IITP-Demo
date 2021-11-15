@@ -1,0 +1,28 @@
+{
+    "param_1": {
+        "default": 10,
+        "type": "int",
+        "value": 112
+    },
+    "param_2": {
+        "default": 2.5,
+        "type": "double",
+        "value": 234.0
+    },
+    "param_3": {
+        "default": 10,
+        "options": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "type": "option",
+        "value": 1
+    },
+    "param_4": {
+        "default": false,
+        "type": "bool",
+        "value": true
+    }
+}

@@ -12,3 +12,5 @@ _deps
 
 
 tmp
+private
+*.wav

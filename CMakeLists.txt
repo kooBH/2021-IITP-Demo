@@ -20,6 +20,9 @@ include(lib/RtAudioWrapper/RtAudio.cmake)
 include(lib/RtAudioWrapper/Libsamplerate.cmake)
 include(lib/KJsonConfig/KJsonConfig.cmake)
 include(lib/KWidgetASR/KWidgetASR.cmake)
+include(lib/KSpectrogram/KSpectrogram.cmake)
+include(lib/WAV/WAV.cmake)
+include(lib/STFT/cpp/STFT_cpp.cmake)
 
 # algorithm
 include(algorithm/multi_source_CDR_MLDR/C++/CDR_MLDR.cmake)
@@ -40,12 +43,14 @@ file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/tmp)
 display_elements(MOC_TARGET ${SRC_Qt_MOC})
 	## sources to be processed by MOC
 	list(APPEND SRC_Qt_MOC
-		#src/app.h
+		${PROJECT_SOURCE_DIR}/src/app.h
+		${PROJECT_SOURCE_DIR}/src/processor.h
 	)	
 	
 	## sources without MetaObject 
 	list(APPEND SRC_Qt
-		#src/app.cpp
+		${PROJECT_SOURCE_DIR}/src/app.cpp
+		${PROJECT_SOURCE_DIR}/src/processor.cpp
 		)
 	
 	foreach(i  ${SRC_Qt_MOC})
@@ -89,8 +94,6 @@ list(APPEND SRC
 	src/main.cpp
 	src/CDR_MLDR.h
 	src/CDR_IVA_MLDR.h
-	src/app.h
-	src/app.cpp
 )
 
 list(APPEND SRC ${SRC_Qt} ${SRC_Qt_MOC})

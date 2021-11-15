@@ -1,7 +1,13 @@
 #include <QApplication>
+#include "app.h"
 
 int main(int argc, char*argv[]){
-	QApplication app(argc, argv);
+	QCoreApplication::addLibraryPath(".");
+
+	QApplication iitp_2021(argc, argv);
+
+	app  main;
+	main.show();
 	
-	return app.exec();
+	return iitp_2021.exec();
 }
