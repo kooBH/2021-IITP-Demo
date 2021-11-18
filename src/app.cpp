@@ -10,6 +10,7 @@ app::app(){
     layout_top.addWidget(&label_top);
     layout_top.addWidget(&btn_play);
     layout_top.addWidget(&btn_load);
+    layout_top.addWidget(&CB_algo);
     label_top.setText("Top");
     btn_play.setText("Play");
     btn_load.setText("Load");
@@ -22,12 +23,16 @@ app::app(){
         tr("Open Wav File"), ".", tr("something (*.wav)"));
       emit(signal_load(fileName));
       });
-
-
     layout_main.addLayout(&layout_top);
     layout_top.setAlignment(Qt::AlignLeft);
 
     QObject::connect(&btn_play, &QPushButton::pressed, this, &app::slot_btn_play);
+
+    // ComboBox Algorithm
+    CB_algo.addItem("None");
+    CB_algo.addItem("CDR_MLDR");
+    CB_algo.addItem("CDR_IVA_MLDR");
+    QObject::connect(&CB_algo, &QComboBox::currentIndexChanged, this, &app::slot_change_algo);
   }
 
   /* main widget */{
@@ -132,15 +137,15 @@ void app::slot_btn_play() {
  }
 
  void app::setProcParam() {
-   proc.ch_in = get("Input/Output", "input_channles");
-   proc.device = get("Input/Output", "input_device");
+   proc.ch_in = static_cast<int>(get("Input/Output", "input_channels"));
+   proc.device = static_cast<int>(get("Input/Output", "input_device"));
 
    proc.bool_init.store(true);
  }
 
  void app::slot_load(QString fileName){
    proc.init();
-   proc.Process(fileName.toStdString().c_str());
+   proc.Run(fileName.toStdString().c_str());
  }
 
  void app::slot_request_asr(const char*path,int idx) {
@@ -156,4 +161,9 @@ void app::slot_btn_play() {
      break;
    }
   
+ }
+
+
+ void app::slot_change_algo(int idx) {
+   proc.cur_algorithm = idx;
  }

@@ -1,11 +1,11 @@
 {
     "input_channels": {
         "type": "int",
-        "value": 7
+        "value": 8
     },
     "input_device": {
         "type": "int",
-        "value": 0
+        "value": 10
     },
     "output_device": {
         "type": "int",

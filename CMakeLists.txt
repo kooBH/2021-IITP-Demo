@@ -45,12 +45,14 @@ display_elements(MOC_TARGET ${SRC_Qt_MOC})
 	list(APPEND SRC_Qt_MOC
 		${PROJECT_SOURCE_DIR}/src/app.h
 		${PROJECT_SOURCE_DIR}/src/processor.h
+		${PROJECT_SOURCE_DIR}/src/WidgetConfig.h
 	)	
 	
 	## sources without MetaObject 
 	list(APPEND SRC_Qt
 		${PROJECT_SOURCE_DIR}/src/app.cpp
 		${PROJECT_SOURCE_DIR}/src/processor.cpp
+		${PROJECT_SOURCE_DIR}/src/WidgetConfig.cpp
 		)
 	
 	foreach(i  ${SRC_Qt_MOC})

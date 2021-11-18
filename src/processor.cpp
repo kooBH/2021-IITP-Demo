@@ -1,13 +1,24 @@
 #include "processor.h"
 
-#define _DEALLOC(x)\
+#define _DEALLOC0(x)\
 if(x){              \
 delete x;           \
 x = nullptr;        \
 }                   \
 
-processor::processor() {
+#define _DEALLOC1(x)\
+if(x){              \
+delete[] x;           \
+x = nullptr;        \
+}
 
+#define _DEALLOC2(x,a) if(x){for(int _i=0;_i<(a);_i++){delete[] x[_i];}; delete[] x; x = nullptr; }
+#define _DEALLOC3(x,a,b) if(x){for(int _i=0;_i<(a);_i++){for (int _j = 0; _j < (b); _j++) {delete[] x[_i][_j];}delete[] x[_i];}; delete[] x;x = nullptr;}
+
+
+
+processor::processor() {
+  atomic_thread.store(false);
 }
 
 processor::~processor() {
@@ -19,6 +30,12 @@ void processor::init() {
 
   if (cur_algorithm == idx_CDR_MLDR) {
     ch_out = 3;
+  }
+  else if (cur_algorithm == idx_CDR_IVA_MLDR) {
+    ch_out = 3;
+  }
+  else {
+    ch_out = 1;
   }
 
   printf("\n -- processor::init -- \n");
@@ -45,6 +62,7 @@ void processor::init() {
   }
   buf_in = new short[ch_in * shift];
   buf_out = new short[ch_out * shift];
+  buf_temp = new short[shift];
   cnt = 0;
 
   /* init for algorithm */
@@ -96,12 +114,35 @@ void processor::init() {
         memset(buf_mask[i][j], 0.01, sizeof(double) * (cdr4proto->nsource));
       }
     }
-
-    printf(" -- CDR_MLDR --\n");
-    printf(" len_buf : %d\n", len_buf);
   }
+  /*   PC Algorithm : CDR IVA MLDR  */
   else if (cur_algorithm == idx_CDR_IVA_MLDR) {
-    
+    cdr = new CDR(frame, shift, ch_in, samplerate, ss);
+    label_tracker = new Label_tracking(cdr->nsource, ch_out, frame / 2 + 1);
+    VAD_machine = new VADStateMachine(ch_out, frame, ch_in);
+    overiva = new OverIVA_Clique(frame, ch_in, ch_out, samplerate);
+    mldr = new MLDR(frame, shift, ch_in, ch_out);
+
+    len_buf = label_tracker->UPframe + VAD_machine->UPframe;
+    buf_data = new double** [len_buf];
+    for (int i = 0; i < len_buf; i++) {
+      buf_data[i] = new double* [ch_in];
+      for (int j = 0; j < ch_in; j++) {
+        buf_data[i][j] = new double[frame + 2];
+        memset(buf_data[i][j], 0.0, sizeof(double) * (frame + 2));
+      }
+
+    }
+    buf_mask = new double** [len_buf];
+    for (int i = 0; i < len_buf; i++)
+    {
+      buf_mask[i] = new double* [frame / 2 + 1];
+      for (int j = 0; j < frame / 2 + 1; j++)
+      {
+        buf_mask[i][j] = new double[cdr->nsource];
+        memset(buf_mask[i][j], 0.01, sizeof(double) * (cdr->nsource));
+      }
+    }
   }
   else{
     
@@ -110,42 +151,84 @@ void processor::init() {
 }
 
 void processor::deinit() {
-  _DEALLOC(cdr4proto);
-  _DEALLOC(label_tracker4proto);
-  _DEALLOC(VAD_machine4proto);
-  _DEALLOC(rt_input);
-  _DEALLOC(output);
+  _DEALLOC0(rt_input);
+  _DEALLOC0(stft_in);
+  _DEALLOC0(stft_out);
 
+  _DEALLOC0(cdr4proto);
+  _DEALLOC0(label_tracker4proto);
+  _DEALLOC0(VAD_machine4proto);
+  _DEALLOC0(mldr4proto);
+
+  _DEALLOC0(cdr);
+  _DEALLOC0(label_tracker);
+  _DEALLOC0(VAD_machine);
+  _DEALLOC0(overiva);
+  _DEALLOC0(mldr);
+
+  _DEALLOC1(buf_in);
+  _DEALLOC1(buf_out);
+
+  _DEALLOC2(raw,ch_in);
+  _DEALLOC2(data,ch_in);
+
+  _DEALLOC3(buf_mask,len_buf,frame/2+1);
+  _DEALLOC3(buf_data,len_buf,ch_in);
+}
+
+void processor::slot_toggle() { 
+
+  if (atomic_thread.load()) {
+    rt_input->Stop();
+    bool_init.store(false);
+  }
+  else {
+    while (!bool_init.load())SLEEP(5);
+    init();
+    Run();
+  }
 }
 
 void processor::Process() {
+  atomic_thread.store(true);
+
+  for (int i = 0; i < ch_out; i++) {
+    vec_output.push_back(new WAV(1, samplerate));
+    SetDateTime(i+1);
+    vec_output[i]->NewFile(file_name);
+  }
+
   rt_input->Start();
 
-  SetDateTime();
-  output->NewFile(file_name);
-
+  
   while (rt_input->IsRunning()) {
     if (rt_input->data.stock.load() > shift) {
-      rt_input->Convert2ShiftedArray(raw);
-      stft_in->stft(raw, data);
-
-      if (cur_algorithm == idx_CDR_MLDR) {
-        CDR_MLDR(data, p_out);
-        stft_out->istft(buf_data[0], buf_out);
-        output->Append(buf_out, shift);
-      }
+     // printf("cnt : %d\n",cnt++);
+      rt_input->GetBuffer(buf_in);
+      stft_in->stft(buf_in, shift * ch_in,data);
+      Algorithm();
     }
     else {
       SLEEP(10);
     }
   }
 
-  output->Finish();
-  emit(signal_process_done(file_name));
   deinit();
+
+  for (int i = 0; i < ch_out; i++) {
+    vec_output[i]->Finish();
+    if(vec_output[i]->GetSize() < 256)
+      continue;
+    emit(signal_request_asr(vec_output[i]->GetFileName(),i));
+    emit(signal_process_done(vec_output[i]->GetFileName()));
+  }
+  delete[] buf_temp;
+  vec_output.clear();
+  atomic_thread.store(false);
 }
 
 void processor::Process(const char* path_input) {
+  atomic_thread.store(true);
 
   input = new WAV();
   input->OpenFile(path_input);
@@ -153,60 +236,68 @@ void processor::Process(const char* path_input) {
   printf("\n -- procssor::Process(%s) --\n",path_input);
   input->Print();
 
-  WAV** outputs = new WAV*[3];
-  outputs[0] = new WAV(1, samplerate);
-  outputs[1] = new WAV(1, samplerate);
-  outputs[2] = new WAV(1, samplerate);
-
-  SetDateTime(1);
-  outputs[0]->NewFile(file_name);
-  SetDateTime(2);
-  outputs[1]->NewFile(file_name);
-  SetDateTime(3);
-  outputs[2]->NewFile(file_name);
-
-  short *buf_temp;
-  buf_temp = new short[shift];
-
-  if (buf_out);
+  for (int i = 0; i < ch_out; i++) {
+    vec_output.push_back(new WAV(1, samplerate));
+    SetDateTime(i+1);
+    vec_output[i]->NewFile(file_name);
+  }
 
   int cnt = 0;
   while (!input->IsEOF()) {
      // input->Convert2ShiftedArray(raw);
       int length = input->ReadUnit(buf_in, shift * ch_in);
       stft_in->stft(buf_in, length, data);
-
-      if (cur_algorithm == idx_CDR_MLDR) {
-        CDR_MLDR(data, p_out);
-        stft_out->istft(buf_data[0], buf_out);
-          for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
-            // Append if speech is active
-            if (VAD_machine4proto->write_on[idx_ch]) {
-              memset(buf_temp, 0, sizeof(short) * shift);
-              for (int j = 0; j < shift; j++)
-                buf_temp[j] = buf_out[j * ch_out + idx_ch];
-              outputs[idx_ch]->Append(buf_temp, shift);
-            }
-          }
-       // printf("cnt : %d\n", cnt++);
-      }
+      Algorithm();
   }
   input->Finish();
   deinit();
 
   for (int i = 0; i < ch_out; i++) {
-    emit(signal_request_asr(outputs[i]->GetFileName(),i));
-    emit(signal_process_done(outputs[i]->GetFileName()));
+    vec_output[i]->Finish();
+    emit(signal_request_asr(vec_output[i]->GetFileName(),i));
+    emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete input;
-  delete buf_temp;
-  delete outputs[0];
-  delete outputs[1];
-  delete outputs[2];
+  delete[] buf_temp;
+  vec_output.clear();
+  atomic_thread.store(false);
+}
+
+void processor::Algorithm(){
+ switch(cur_algorithm){
+        case idx_CDR_MLDR:
+          CDR_MLDR(data);
+          stft_out->istft(buf_data[0], buf_out);
+            for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+              // Append if speech is active
+              if (VAD_machine4proto->write_on[idx_ch]) {
+                memset(buf_temp, 0, sizeof(short) * shift);
+                for (int j = 0; j < shift; j++)
+                  buf_temp[j] = buf_out[j * ch_out + idx_ch];
+                vec_output[idx_ch]->Append(buf_temp, shift);
+              }
+            }
+            break;
+        case idx_CDR_IVA_MLDR :
+          CDR_IVA_MLDR(data);
+          stft_out->istft(buf_data[0], buf_out);
+          for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+            // Append if speech is active
+            if (VAD_machine->write_on[idx_ch]) {
+              memset(buf_temp, 0, sizeof(short) * shift);
+              for (int j = 0; j < shift; j++)
+                buf_temp[j] = buf_out[j * ch_out + idx_ch];
+              vec_output[idx_ch]->Append(buf_temp, shift);
+            }
+          }
+          break;
+        default:
+          ;
+      }
 }
 
 
-void processor::CDR_MLDR(double** data,double**out) {
+void processor::CDR_MLDR(double** data) {
   cnt++;
 
   /* shift  of VAD buffer*/
@@ -249,15 +340,82 @@ void processor::CDR_MLDR(double** data,double**out) {
   mldr4proto->Process(buf_data[0], buf_mask[0], label_tracker4proto->ind2label);
 }
 
-void processor::slot_toggle() { 
 
-  if (isRunning) {
-    rt_input->Stop();
-    bool_init.store(false);
+void processor::CDR_IVA_MLDR(double** data) {
+  // VAD buffer
+  for (int k = 1; k < len_buf; k++){
+    for (int i = 0; i < ch_in; i++){
+      for (int j = 0; j < frame + 2; j++){
+        buf_data[k - 1][i][j] = buf_data[k][i][j];
+      }
+    }
+  }
+  for (int i = 0; i < ch_in; i++){
+    for (int j = 0; j < frame + 2; j++){
+      buf_data[len_buf - 1][i][j] = data[i][j];
+    }
+  }
+
+  cdr->Process(data);
+
+  for (int k = 1; k < len_buf; k++){
+    for (int i = 0; i < frame / 2 + 1; i++){
+      for (int j = 0; j < cdr->nsource; j++){
+        buf_mask[k - 1][i][j] = buf_mask[k][i][j];
+      }
+    }
+  }
+  for (int i = 0; i < frame / 2 + 1; i++){
+    for (int j = 0; j < cdr->nsource; j++){
+      if (cdr->mask[i][j] > p_init){
+        buf_mask[len_buf - 1][i][j] = cdr->mask[i][j];
+      }
+      else{
+        buf_mask[len_buf - 1][i][j] = p_init;
+      }
+    }
+  }
+  label_tracker->Process(cdr->mask);
+  VAD_machine->Process(cdr->st_angle, label_tracker->LRT_val, label_tracker->ind2label, label_tracker->upcount, label_tracker->downcount, mldr->alpha_null_pre, mldr->alpha_null, cnt);
+  overiva->Process(buf_data[0], mldr->W, buf_mask[0], VAD_machine->ind2vad_1);
+  mldr->Process(buf_data[0], buf_mask[0], VAD_machine->ind2vad_1, VAD_machine->active_st, VAD_machine->State, overiva->A, overiva->W);
+}
+
+
+
+void processor::Run() {
+  
+  if (atomic_thread.load()) {
+    printf("Warnning::Process thread is still running");
+    return;
   }
   else {
-    while (!bool_init.load())SLEEP(5);
-    init();
-    Process();
+    if (thread_process) {
+      delete thread_process;
+      thread_process = nullptr;
+    }
   }
+
+  thread_process = new std::thread([=] {this->Process(); });
+  thread_process->detach();
+
 }
+
+void processor::Run(const char* path) {
+  if (atomic_thread.load()) {
+    printf("Warnning::Process thread is still running");
+    return;
+  }
+  else {
+    if (thread_process) {
+      delete thread_process;
+      thread_process = nullptr;
+    }
+  }
+  thread_process = new std::thread([=] {this->Process(path); });
+  thread_process->detach();
+
+
+}
+
+
