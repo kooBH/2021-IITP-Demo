@@ -94,8 +94,6 @@ endif()
 
 list(APPEND SRC
 	src/main.cpp
-	src/CDR_MLDR.h
-	src/CDR_IVA_MLDR.h
 )
 
 list(APPEND SRC ${SRC_Qt} ${SRC_Qt_MOC})

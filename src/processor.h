@@ -76,6 +76,7 @@ class processor : public QObject{
 		std::atomic<bool> atomic_thread; // is thread running ?
 
 		void Algorithm();
+		void CreateOutputs();
 
 
 		void SetDateTime() {
@@ -93,6 +94,16 @@ class processor : public QObject{
 	   	strftime(file_name, sizeof(file_name), "%Y-%m-%d_%H-%M-%S", timeinfo);
 			sprintf(file_name, "%s_%d.wav", file_name, idx);
 		}
+		std::string cur_time_str(int idx) {
+			char tmp_chars[1024];
+		  time_t rawtime;
+			struct tm* timeinfo;
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+	   	strftime(tmp_chars, sizeof(tmp_chars), "%Y-%m-%d_%H-%M-%S", timeinfo);
+			sprintf(tmp_chars, "%s_%d.wav", tmp_chars, idx);
+			return std::string(tmp_chars);
+		}
 
 	public :
 		processor();
@@ -105,6 +116,7 @@ class processor : public QObject{
 
 		int ch_in=7;
 		int ch_out=3;
+		int num_out = 1;
 		int samplerate=16000;
 		int frame=1024;
 		int shift=256;
@@ -118,11 +130,11 @@ class processor : public QObject{
 		void init();
 		void deinit();
 
-		void Run();
-		void Run(const char*);
-
 		void Process();
-		void Process(const char*);
+		void Process(std::string);
+
+		void Run();
+		void Run(std::string);
 
 		void CDR_MLDR(double ** data);
 		void CDR_IVA_MLDR(double ** data);

@@ -179,6 +179,7 @@ void processor::deinit() {
 void processor::slot_toggle() { 
 
   if (atomic_thread.load()) {
+    printf("STOP\n");
     rt_input->Stop();
     bool_init.store(false);
   }
@@ -189,17 +190,33 @@ void processor::slot_toggle() {
   }
 }
 
+
+void processor::CreateOutputs() {
+  if (cur_algorithm == idx_CDR_MLDR) {
+    num_out = cdr4proto->nsource;
+  }
+  else if (cur_algorithm == idx_CDR_IVA_MLDR) {
+    num_out = cdr->nsource;
+  }
+  else {
+    num_out = ch_out;
+  }
+
+  for (int i = 0; i < num_out; i++) {
+    vec_output.push_back(new WAV(1, samplerate));
+    std::string tmp_str = cur_time_str(i + 1);
+    //printf("NewFile : %s\n",tmp_str.c_str());
+    vec_output[i]->NewFile(tmp_str.c_str());
+  }
+
+}
+
 void processor::Process() {
   atomic_thread.store(true);
 
-  for (int i = 0; i < ch_out; i++) {
-    vec_output.push_back(new WAV(1, samplerate));
-    SetDateTime(i+1);
-    vec_output[i]->NewFile(file_name);
-  }
+  CreateOutputs();
 
   rt_input->Start();
-
   
   while (rt_input->IsRunning()) {
     if (rt_input->data.stock.load() > shift) {
@@ -214,12 +231,14 @@ void processor::Process() {
   }
 
   deinit();
-
-  for (int i = 0; i < ch_out; i++) {
+  
+  int asr_cnt = 0;
+  for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
+  for (int i = 0; i < num_out && asr_cnt < 3; i++) {
     if(vec_output[i]->GetSize() < 256)
       continue;
-    emit(signal_request_asr(vec_output[i]->GetFileName(),i));
+    emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete[] buf_temp;
@@ -227,20 +246,16 @@ void processor::Process() {
   atomic_thread.store(false);
 }
 
-void processor::Process(const char* path_input) {
+void processor::Process(std::string path_input) {
   atomic_thread.store(true);
 
   input = new WAV();
-  input->OpenFile(path_input);
+  input->OpenFile(path_input.c_str());
 
-  printf("\n -- procssor::Process(%s) --\n",path_input);
+  printf("\n -- procssor::Process(%s) --\n",path_input.c_str());
   input->Print();
 
-  for (int i = 0; i < ch_out; i++) {
-    vec_output.push_back(new WAV(1, samplerate));
-    SetDateTime(i+1);
-    vec_output[i]->NewFile(file_name);
-  }
+  CreateOutputs();
 
   int cnt = 0;
   while (!input->IsEOF()) {
@@ -252,9 +267,13 @@ void processor::Process(const char* path_input) {
   input->Finish();
   deinit();
 
-  for (int i = 0; i < ch_out; i++) {
+  int asr_cnt = 0;
+  for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
-    emit(signal_request_asr(vec_output[i]->GetFileName(),i));
+  for (int i = 0; i < num_out && asr_cnt < 3; i++) {
+    if(vec_output[i]->GetSize() < 256)
+      continue;
+    emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete input;
@@ -272,6 +291,8 @@ void processor::Algorithm(){
               // Append if speech is active
               if (VAD_machine4proto->write_on[idx_ch]) {
                 memset(buf_temp, 0, sizeof(short) * shift);
+
+                /* TODO : Write WAV per azimuth */
                 for (int j = 0; j < shift; j++)
                   buf_temp[j] = buf_out[j * ch_out + idx_ch];
                 vec_output[idx_ch]->Append(buf_temp, shift);
@@ -287,7 +308,8 @@ void processor::Algorithm(){
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
-              vec_output[idx_ch]->Append(buf_temp, shift);
+
+              vec_output[VAD_machine->ind2vad_1[idx_ch]]->Append(buf_temp, shift);
             }
           }
           break;
@@ -317,20 +339,15 @@ void processor::CDR_MLDR(double** data) {
   //#pragma omp parallel for schedule(static,32)
   cdr4proto->Process(data);
 
-  for (int k = 1; k < len_buf; k++)
-  {
-    for (int i = 0; i < frame / 2 + 1; i++)
-    {
-      for (int j = 0; j < cdr4proto->nsource; j++)
-      {
+  for (int k = 1; k < len_buf; k++){
+    for (int i = 0; i < frame / 2 + 1; i++){
+      for (int j = 0; j < cdr4proto->nsource; j++){
         buf_mask[k - 1][i][j] = buf_mask[k][i][j];
       }
     }
   }
-  for (int i = 0; i < frame / 2 + 1; i++)
-  {
-    for (int j = 0; j < cdr4proto->nsource; j++)
-    {
+  for (int i = 0; i < frame / 2 + 1; i++){
+    for (int j = 0; j < cdr4proto->nsource; j++){
       buf_mask[len_buf - 1][i][j] = cdr4proto->mask[i][j];
     }
   }
@@ -383,7 +400,7 @@ void processor::CDR_IVA_MLDR(double** data) {
 
 
 
-void processor::Run() {
+void processor::Run(){
   
   if (atomic_thread.load()) {
     printf("Warnning::Process thread is still running");
@@ -401,7 +418,7 @@ void processor::Run() {
 
 }
 
-void processor::Run(const char* path) {
+void processor::Run(std::string path) {
   if (atomic_thread.load()) {
     printf("Warnning::Process thread is still running");
     return;

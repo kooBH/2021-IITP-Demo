@@ -145,7 +145,7 @@ void app::slot_btn_play() {
 
  void app::slot_load(QString fileName){
    proc.init();
-   proc.Run(fileName.toStdString().c_str());
+   proc.Run(fileName.toStdString());
  }
 
  void app::slot_request_asr(const char*path,int idx) {
