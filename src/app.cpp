@@ -21,6 +21,9 @@ app::app(){
 
       fileName = dialog.getOpenFileName(this,
         tr("Open Wav File"), ".", tr("something (*.wav)"));
+      // Exception
+      if (fileName.isEmpty())
+        return;
       emit(signal_load(fileName));
       });
     layout_main.addLayout(&layout_top);
@@ -32,6 +35,7 @@ app::app(){
     CB_algo.addItem("None");
     CB_algo.addItem("CDR_MLDR");
     CB_algo.addItem("CDR_IVA_MLDR");
+    CB_algo.addItem("CDR_IVA_MLDR_4ch");
     QObject::connect(&CB_algo, &QComboBox::currentIndexChanged, this, &app::slot_change_algo);
   }
 
@@ -67,6 +71,7 @@ app::app(){
     layout_ASR.addWidget(&widget_ASR_1);
     layout_ASR.addWidget(&widget_ASR_2);
     layout_ASR.addWidget(&widget_ASR_3);
+    layout_ASR.addWidget(&widget_ASR_4);
 
     widget_main.addTab(&widget_ASR, "ASR");
 
@@ -95,6 +100,7 @@ app::app(){
   widget_ASR_1.Init(j["key1"].get<string>(),"korean");
   widget_ASR_2.Init(j["key2"].get<string>(),"korean");
   widget_ASR_3.Init(j["key3"].get<string>(),"korean");
+  widget_ASR_4.Init(j["key4"].get<string>(),"korean");
 };
 
 app::~app() {
@@ -149,6 +155,7 @@ void app::slot_btn_play() {
  }
 
  void app::slot_request_asr(const char*path,int idx) {
+   widget_main.setCurrentIndex(2);
    switch (idx) {
    case 0 :
      widget_ASR_1.Load(string(path));
@@ -159,7 +166,11 @@ void app::slot_btn_play() {
    case 2:
      widget_ASR_3.Load(string(path));
      break;
+   case 3:
+     widget_ASR_4.Load(string(path));
+     break;
    }
+   update();
   
  }
 

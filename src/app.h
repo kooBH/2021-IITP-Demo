@@ -32,6 +32,7 @@ private:
   KWidgetASR widget_ASR_1;
   KWidgetASR widget_ASR_2;
   KWidgetASR widget_ASR_3;
+  KWidgetASR widget_ASR_4;
 
   bool is_playing = false;
 

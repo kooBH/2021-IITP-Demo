@@ -34,6 +34,9 @@ void processor::init() {
   else if (cur_algorithm == idx_CDR_IVA_MLDR) {
     ch_out = 3;
   }
+  else if (cur_algorithm == idx_CDR_IVA_MLDR_4ch) {
+    ch_out = 4;
+  }
   else {
     ch_out = 1;
   }
@@ -116,7 +119,7 @@ void processor::init() {
     }
   }
   /*   PC Algorithm : CDR IVA MLDR  */
-  else if (cur_algorithm == idx_CDR_IVA_MLDR) {
+  else if (cur_algorithm == idx_CDR_IVA_MLDR || cur_algorithm == idx_CDR_IVA_MLDR_4ch) {
     cdr = new CDR(frame, shift, ch_in, samplerate, ss);
     label_tracker = new Label_tracking(cdr->nsource, ch_out, frame / 2 + 1);
     VAD_machine = new VADStateMachine(ch_out, frame, ch_in);
@@ -195,7 +198,7 @@ void processor::CreateOutputs() {
   if (cur_algorithm == idx_CDR_MLDR) {
     num_out = cdr4proto->nsource;
   }
-  else if (cur_algorithm == idx_CDR_IVA_MLDR) {
+  else if (cur_algorithm == idx_CDR_IVA_MLDR || cur_algorithm == idx_CDR_IVA_MLDR_4ch) {
     num_out = cdr->nsource;
   }
   else {
@@ -235,7 +238,7 @@ void processor::Process() {
   int asr_cnt = 0;
   for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
-  for (int i = 0; i < num_out && asr_cnt < 3; i++) {
+  for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
     if(vec_output[i]->GetSize() < 256)
       continue;
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
@@ -270,7 +273,7 @@ void processor::Process(std::string path_input) {
   int asr_cnt = 0;
   for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
-  for (int i = 0; i < num_out && asr_cnt < 3; i++) {
+  for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
     if(vec_output[i]->GetSize() < 256)
       continue;
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
@@ -287,18 +290,16 @@ void processor::Algorithm(){
         case idx_CDR_MLDR:
           CDR_MLDR(data);
           stft_out->istft(buf_data[0], buf_out);
-            for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
-              // Append if speech is active
-              if (VAD_machine4proto->write_on[idx_ch]) {
-                memset(buf_temp, 0, sizeof(short) * shift);
-
-                /* TODO : Write WAV per azimuth */
-                for (int j = 0; j < shift; j++)
-                  buf_temp[j] = buf_out[j * ch_out + idx_ch];
-                vec_output[idx_ch]->Append(buf_temp, shift);
-              }
+          for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+            // Append if speech is active
+            if (VAD_machine4proto->write_on[idx_ch]) {
+              memset(buf_temp, 0, sizeof(short) * shift);
+              for (int j = 0; j < shift; j++)
+                buf_temp[j] = buf_out[j * ch_out + idx_ch];
+              vec_output[label_tracker4proto->ind2label[idx_ch]]->Append(buf_temp, shift);
             }
-            break;
+          }
+          break;
         case idx_CDR_IVA_MLDR :
           CDR_IVA_MLDR(data);
           stft_out->istft(buf_data[0], buf_out);
@@ -313,6 +314,21 @@ void processor::Algorithm(){
             }
           }
           break;
+        case idx_CDR_IVA_MLDR_4ch :
+          CDR_IVA_MLDR(data);
+          stft_out->istft(buf_data[0], buf_out);
+          for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+            // Append if speech is active
+            if (VAD_machine->write_on[idx_ch]) {
+              memset(buf_temp, 0, sizeof(short) * shift);
+              for (int j = 0; j < shift; j++)
+                buf_temp[j] = buf_out[j * ch_out + idx_ch];
+
+              vec_output[VAD_machine->ind2vad_1[idx_ch]]->Append(buf_temp, shift);
+            }
+          }
+          break;
+
         default:
           ;
       }

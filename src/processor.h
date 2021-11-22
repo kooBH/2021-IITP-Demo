@@ -141,6 +141,7 @@ class processor : public QObject{
 
 		constexpr static int idx_CDR_MLDR = 1;
 		constexpr static int idx_CDR_IVA_MLDR = 2;
+		constexpr static int idx_CDR_IVA_MLDR_4ch = 3;
 
 	void slot_toggle();
 
