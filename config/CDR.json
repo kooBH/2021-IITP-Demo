@@ -1,0 +1,43 @@
+{
+    "nsource": {
+        "default": 12,
+        "type": "int",
+        "value": 12
+    },
+    "smooth": {
+        "default": 0.4,
+        "type": "double",
+        "value": 0.4
+    },
+    "mu": {
+        "default": 1.3,
+        "type": "double",
+        "value": 1.3
+    },
+    "Gmin": {
+        "default": 0.1,
+        "type": "double",
+        "value": 0.1
+    },
+    "alpha": {
+        "default": 1.0,
+        "type": "double",
+        "value": 1.0
+    },
+    "beta": {
+        "default": 0.5,
+        "type": "double",
+        "value": 0.5
+    },
+    "epsi": {
+        "default": 1e-10,
+        "type": "double",
+        "value": 1e-10
+    },
+    "dist": {
+        "default": 0.043,
+        "type": "double",
+        "value": 0.043
+    }
+
+}

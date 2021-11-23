@@ -122,11 +122,39 @@ void processor::init() {
   }
   /*   PC Algorithm : CDR IVA MLDR  */
   else if (cur_algorithm == idx_CDR_IVA_MLDR || cur_algorithm == idx_CDR_IVA_MLDR_4ch) {
-    cdr = new CDR(frame, shift, ch_in, samplerate, ss);
-    label_tracker = new Label_tracking(cdr->nsource, ch_out, frame / 2 + 1);
-    VAD_machine = new VADStateMachine(ch_out, frame, ch_in);
-    overiva = new OverIVA_Clique(frame, ch_in, ch_out, samplerate);
-    mldr = new MLDR(frame, shift, ch_in, ch_out);
+    cdr = new CDR(
+      frame,
+      shift,
+      ch_in,
+      samplerate,
+      ss,
+      CDR_smooth,
+      CDR_nsource,
+      CDR_mu,
+      CDR_Gmin,
+      CDR_alpha,
+      CDR_beta,
+      CDR_epsi,
+      CDR_dist
+    );
+    label_tracker = new Label_tracking(cdr->nsource,
+      ch_out,
+      frame / 2 + 1
+    );
+    VAD_machine = new VADStateMachine(ch_out, 
+      frame,
+      ch_in
+    );
+    overiva = new OverIVA_Clique(frame, 
+      ch_in, 
+      ch_out,
+      samplerate
+    );
+    mldr = new MLDR(frame,
+      shift,
+      ch_in,
+      ch_out
+    );
 
     len_buf = label_tracker->UPframe + VAD_machine->UPframe;
     buf_data = new double** [len_buf];

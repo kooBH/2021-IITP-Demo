@@ -60,6 +60,7 @@ app::app(){
 
     widget_config.Add("Input/Output", "../config/io.json");
     widget_config.Add("p1", "../config/param1.json");
+    widget_config.Add("CDR", "../config/CDR.json");
 
     widget_ASR.setLayout(&layout_ASR);
     widget_ASR.setStyleSheet("\
@@ -145,6 +146,17 @@ void app::slot_btn_play() {
  void app::setProcParam() {
    proc.ch_in = static_cast<int>(get("Input/Output", "input_channels"));
    proc.device = static_cast<int>(get("Input/Output", "input_device"));
+
+   /* CDR */
+   proc.CDR_nsource = static_cast<int>(get("CDR", "nousrce"));
+   proc.CDR_smooth = get("CDR", "smooth");
+   proc.CDR_mu= get("CDR", "mu");
+   proc.CDR_Gmin= get("CDR", "Gmin");
+   proc.CDR_alpha= get("CDR", "alpha");
+   proc.CDR_beta= get("CDR", "beta");
+   proc.CDR_epsi= get("CDR", "epsi");
+   proc.CDR_dist= get("CDR", "dist");
+
 
    proc.bool_init.store(true);
  }

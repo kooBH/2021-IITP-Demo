@@ -128,6 +128,17 @@ class processor : public QObject{
 		int cnt = 0;
 
 
+		/* CDR_IVA_MLDR */
+		double CDR_smooth=0.4;
+		int CDR_nsource=12;
+    double CDR_mu=1.3;
+    double CDR_Gmin=0.1;
+    double CDR_alpha=1.0;
+    double CDR_beta=0.5;
+    double CDR_epsi=1e-10;
+    double CDR_dist=0.043; // for UMA8 : 0.043, MEMS : 0.04
+
+
 		void init();
 		void deinit();
 
