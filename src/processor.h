@@ -23,7 +23,6 @@
 
 #include <time.h>
 
-
 using std::vector;
 
 class processor : public QObject{
@@ -32,6 +31,8 @@ class processor : public QObject{
 		char file_name[2048];
 		bool isRunning = false;
 
+
+	//	app* parent;
 	
 		/* base modules */
 		RtInput* rt_input=nullptr;

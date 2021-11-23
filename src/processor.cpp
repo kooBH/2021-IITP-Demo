@@ -19,6 +19,8 @@ x = nullptr;        \
 
 processor::processor() {
   atomic_thread.store(false);
+ // parent = app_;
+
 }
 
 processor::~processor() {
@@ -242,6 +244,7 @@ void processor::Process() {
     if(vec_output[i]->GetSize() < 256)
       continue;
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
+    //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete[] buf_temp;
@@ -277,6 +280,7 @@ void processor::Process(std::string path_input) {
     if(vec_output[i]->GetSize() < 256)
       continue;
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
+    //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete input;
