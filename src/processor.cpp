@@ -156,9 +156,6 @@ void processor::init() {
 }
 
 void processor::deinit() {
-  _DEALLOC0(rt_input);
-  _DEALLOC0(stft_in);
-  _DEALLOC0(stft_out);
 
   _DEALLOC0(cdr4proto);
   _DEALLOC0(label_tracker4proto);
@@ -179,6 +176,12 @@ void processor::deinit() {
 
   _DEALLOC3(buf_mask,len_buf,frame/2+1);
   _DEALLOC3(buf_data,len_buf,ch_in);
+
+
+  _DEALLOC0(rt_input);
+  _DEALLOC0(stft_in);
+  _DEALLOC0(stft_out);
+  bool_init.store(false);
 }
 
 void processor::slot_toggle() { 
@@ -186,10 +189,10 @@ void processor::slot_toggle() {
   if (atomic_thread.load()) {
     printf("STOP\n");
     rt_input->Stop();
-    bool_init.store(false);
   }
   else {
     while (!bool_init.load())SLEEP(5);
+    printf("START\n");
     init();
     Run();
   }
@@ -234,8 +237,6 @@ void processor::Process() {
       SLEEP(10);
     }
   }
-
-  deinit();
   
   int asr_cnt = 0;
   for (int i = 0; i < num_out; i++)
@@ -243,12 +244,15 @@ void processor::Process() {
   for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
     if(vec_output[i]->GetSize() < 256)
       continue;
+    vec_output[i]->Normalize();
+    vec_output[i]->Finish();
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
     //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
   delete[] buf_temp;
   vec_output.clear();
+  deinit();
   atomic_thread.store(false);
 }
 
@@ -279,6 +283,8 @@ void processor::Process(std::string path_input) {
   for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
     if(vec_output[i]->GetSize() < 256)
       continue;
+    vec_output[i]->Normalize();
+    vec_output[i]->Finish();
     emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
     //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
