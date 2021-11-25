@@ -240,9 +240,13 @@ void processor::CreateOutputs() {
   
   for (int i = 0; i < num_out; i++) {
     vec_output.push_back(new WAV(1, samplerate));
-    //std::string tmp_str = cur_time_str(i + 1);
+
+    if (cur_algorithm == idx_CDR_MLDR) {
+      std::string tmp_str = cur_time_str(i + 1);
+      vec_output[i]->NewFile(tmp_str.c_str());
+    
+    }
     //printf("NewFile : %s\n",tmp_str.c_str());
-    //vec_output[i]->NewFile(tmp_str.c_str());
   }
 
 }
@@ -267,20 +271,21 @@ void processor::Process() {
     }
   }
  
-  /*
-  int asr_cnt = 0;
-  for (int i = 0; i < num_out; i++)
-    vec_output[i]->Finish();
-  for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
-    if(vec_output[i]->GetSize() < 256)
-      continue;
-    vec_output[i]->Normalize();
-    vec_output[i]->Finish();
-    emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
-    //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
-    emit(signal_process_done(vec_output[i]->GetFileName()));
+  if (cur_algorithm == idx_CDR_MLDR) {
+    int asr_cnt = 0;
+    for (int i = 0; i < num_out; i++)
+      vec_output[i]->Finish();
+    for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
+      if (vec_output[i]->GetSize() < 1024)
+        continue;
+      vec_output[i]->Normalize();
+      vec_output[i]->Finish();
+      emit(signal_request_asr(vec_output[i]->GetFileName(), asr_cnt++));
+      //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
+      emit(signal_process_done(vec_output[i]->GetFileName()));
+    }
   }
-  */
+
   delete[] buf_temp;
   vec_output.clear();
   deinit();
@@ -308,20 +313,20 @@ void processor::Process(std::string path_input) {
   input->Finish();
   deinit();
 
-  /*
-  int asr_cnt = 0;
-  for (int i = 0; i < num_out; i++)
-    vec_output[i]->Finish();
-  for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
-    if(vec_output[i]->GetSize() < 256)
-      continue;
-    vec_output[i]->Normalize();
-    vec_output[i]->Finish();
-    emit(signal_request_asr(vec_output[i]->GetFileName(),asr_cnt++));
-    //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
-    emit(signal_process_done(vec_output[i]->GetFileName()));
+  if (cur_algorithm == idx_CDR_MLDR) {
+    int asr_cnt = 0;
+    for (int i = 0; i < num_out; i++)
+      vec_output[i]->Finish();
+    for (int i = 0; i < num_out && asr_cnt < ch_out; i++) {
+      if (vec_output[i]->GetSize() < 1024)
+        continue;
+      vec_output[i]->Normalize();
+      vec_output[i]->Finish();
+      emit(signal_request_asr(vec_output[i]->GetFileName(), asr_cnt++));
+      //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
+      emit(signal_process_done(vec_output[i]->GetFileName()));
+    }
   }
-  */
   delete input;
   delete[] buf_temp;
   vec_output.clear();
@@ -350,7 +355,6 @@ void processor::Algorithm(){
             int cur_azimuth = VAD_machine->ind2vad_1[idx_ch];
             //Detect VAD on 
             if (VAD_machine->vad_indicator[idx_ch] == 1) {
-              printf("Create WAV for %d\n",cur_azimuth);
               if (vec_output[cur_azimuth]->GetIsOpen())
                 vec_output[cur_azimuth]->Finish();
               std::string tmp_str = cur_time_str(cur_azimuth + 1);
@@ -367,7 +371,6 @@ void processor::Algorithm(){
             }
             if (VAD_machine->vad_indicator[idx_ch] < 0) {
               cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
-              printf("Close WAV for %d\n",cur_azimuth);
               vec_output[cur_azimuth]->Normalize();
               vec_output[cur_azimuth]->Finish();
               //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
@@ -384,7 +387,6 @@ void processor::Algorithm(){
             int cur_azimuth = VAD_machine->ind2vad_1[idx_ch];
             //Detect VAD on 
             if (VAD_machine->vad_indicator[idx_ch] == 1) {
-              printf("Create WAV for %d\n",cur_azimuth);
               if (vec_output[cur_azimuth]->GetIsOpen())
                 vec_output[cur_azimuth]->Finish();
               std::string tmp_str = cur_time_str(cur_azimuth + 1);
@@ -401,7 +403,6 @@ void processor::Algorithm(){
             }
             if (VAD_machine->vad_indicator[idx_ch] < 0) {
               cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
-              printf("Close WAV for %d\n",cur_azimuth);
               vec_output[cur_azimuth]->Normalize();
               vec_output[cur_azimuth]->Finish();
               //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
