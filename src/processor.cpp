@@ -256,12 +256,30 @@ void processor::Process() {
 
   CreateOutputs();
 
+
+  output = new WAV(ch_in, samplerate);
+  output->NewFile("input.wav");
   rt_input->Start();
   
   while (rt_input->IsRunning()) {
     if (rt_input->data.stock.load() > shift) {
      // printf("cnt : %d\n",cnt++);
       rt_input->GetBuffer(buf_in);
+
+      /* Scaling : input is two small */
+      for (int i = 0; i < shift * ch_in; i++) {
+        if (buf_in[i] > 0) {
+          buf_in[i] = std::min(buf_in[i] * 10, 32767);
+          if (buf_in[i] == 32767)
+            printf("WARNNING::clipping 32767\n");
+        }
+        else {
+          buf_in[i] = std::max(buf_in[i] * 10, -32767);
+          if (buf_in[i] == -32767)
+            printf("WARNNING::clipping -32767\n");
+        }
+      }
+      output->Append(buf_in, shift*ch_in);
       stft_in->stft(buf_in, shift * ch_in,data);
       Algorithm();
 
@@ -286,6 +304,8 @@ void processor::Process() {
     }
   }
 
+  output->Finish();
+  delete output;
   delete[] buf_temp;
   vec_output.clear();
   deinit();
@@ -363,18 +383,18 @@ void processor::Algorithm(){
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
             // Append if speech is active
-            if (VAD_machine->write_on[idx_ch]) {
+            if (VAD_machine->write_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
               vec_output[cur_azimuth]->Append(buf_temp, shift);
             }
-            if (VAD_machine->vad_indicator[idx_ch] < 0) {
+            if (VAD_machine->vad_indicator[idx_ch] < 0 ) {
               cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
               vec_output[cur_azimuth]->Normalize();
               vec_output[cur_azimuth]->Finish();
-              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
-              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
+              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/3)));
+              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
               emit(signal_process_done(vec_output[cur_azimuth]->GetFileName()));
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
@@ -395,18 +415,18 @@ void processor::Algorithm(){
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
             // Append if speech is active
-            if (VAD_machine->write_on[idx_ch]) {
+            else if (VAD_machine->write_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
               vec_output[cur_azimuth]->Append(buf_temp, shift);
             }
-            if (VAD_machine->vad_indicator[idx_ch] < 0) {
+            else if (VAD_machine->vad_indicator[idx_ch] < 0 ) {
               cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
               vec_output[cur_azimuth]->Normalize();
               vec_output[cur_azimuth]->Finish();
-              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
-              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
+              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/3)));
+              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
               emit(signal_process_done(vec_output[cur_azimuth]->GetFileName()));
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
@@ -422,7 +442,6 @@ void processor::Algorithm(){
 
 
 void processor::CDR_MLDR(double** data) {
-  cnt++;
 
   /* shift  of VAD buffer*/
   for (int k = 1; k < len_buf; k++){
@@ -453,6 +472,8 @@ void processor::CDR_MLDR(double** data) {
       buf_mask[len_buf - 1][i][j] = cdr4proto->mask[i][j];
     }
   }
+  if (cnt++ < len_buf)
+    return;
 
   label_tracker4proto->Process(cdr4proto->mask);
   VAD_machine4proto->Process(label_tracker4proto->L, label_tracker4proto->ind2label, label_tracker4proto->upcount, label_tracker4proto->downcount, mldr4proto->alpha_null_pre, mldr4proto->alpha_null);
@@ -494,6 +515,10 @@ void processor::CDR_IVA_MLDR(double** data) {
       }
     }
   }
+
+  if (cnt++ < len_buf)
+    return;
+
   label_tracker->Process(cdr->mask);
   VAD_machine->Process(cdr->st_angle, label_tracker->LRT_val, label_tracker->ind2label, label_tracker->upcount, label_tracker->downcount, mldr->alpha_null_pre, mldr->alpha_null, cnt);
   overiva->Process(buf_data[0], mldr->W, buf_mask[0], VAD_machine->ind2vad_1);
