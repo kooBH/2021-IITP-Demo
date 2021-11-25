@@ -99,7 +99,7 @@ void processor::init() {
       ch_in,
       ch_out);
       
-    len_buf = label_tracker4proto->UPframe + VAD_machine4proto->UPframe;
+    len_buf = label_tracker4proto->UPframe + VAD_machine4proto->UPframe+pad_vad;
     buf_data = new double** [len_buf];
     for (int i = 0; i < len_buf; i++){
       buf_data[i] = new double* [ch_in];
@@ -156,7 +156,7 @@ void processor::init() {
       ch_out
     );
 
-    len_buf = label_tracker->UPframe + VAD_machine->UPframe;
+    len_buf = label_tracker->UPframe + VAD_machine->UPframe+pad_vad;
     buf_data = new double** [len_buf];
     for (int i = 0; i < len_buf; i++) {
       buf_data[i] = new double* [ch_in];
@@ -237,12 +237,12 @@ void processor::CreateOutputs() {
   else {
     num_out = ch_out;
   }
-
+  
   for (int i = 0; i < num_out; i++) {
     vec_output.push_back(new WAV(1, samplerate));
-    std::string tmp_str = cur_time_str(i + 1);
+    //std::string tmp_str = cur_time_str(i + 1);
     //printf("NewFile : %s\n",tmp_str.c_str());
-    vec_output[i]->NewFile(tmp_str.c_str());
+    //vec_output[i]->NewFile(tmp_str.c_str());
   }
 
 }
@@ -260,12 +260,14 @@ void processor::Process() {
       rt_input->GetBuffer(buf_in);
       stft_in->stft(buf_in, shift * ch_in,data);
       Algorithm();
+
     }
     else {
       SLEEP(10);
     }
   }
-  
+ 
+  /*
   int asr_cnt = 0;
   for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
@@ -278,6 +280,7 @@ void processor::Process() {
     //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
+  */
   delete[] buf_temp;
   vec_output.clear();
   deinit();
@@ -305,6 +308,7 @@ void processor::Process(std::string path_input) {
   input->Finish();
   deinit();
 
+  /*
   int asr_cnt = 0;
   for (int i = 0; i < num_out; i++)
     vec_output[i]->Finish();
@@ -317,6 +321,7 @@ void processor::Process(std::string path_input) {
     //parent->slot_request_asr(vec_output[i]->GetFileName(),asr_cnt++);
     emit(signal_process_done(vec_output[i]->GetFileName()));
   }
+  */
   delete input;
   delete[] buf_temp;
   vec_output.clear();
@@ -342,13 +347,33 @@ void processor::Algorithm(){
           CDR_IVA_MLDR(data);
           stft_out->istft(buf_data[0], buf_out);
           for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+            int cur_azimuth = VAD_machine->ind2vad_1[idx_ch];
+            //Detect VAD on 
+            if (VAD_machine->vad_indicator[idx_ch] == 1) {
+              printf("Create WAV for %d\n",cur_azimuth);
+              if (vec_output[cur_azimuth]->GetIsOpen())
+                vec_output[cur_azimuth]->Finish();
+              std::string tmp_str = cur_time_str(cur_azimuth + 1);
+              vec_output[cur_azimuth]->NewFile(tmp_str);
+
+              VAD_machine->vad_indicator[idx_ch] = 0;
+            }
             // Append if speech is active
             if (VAD_machine->write_on[idx_ch]) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
-
-              vec_output[VAD_machine->ind2vad_1[idx_ch]]->Append(buf_temp, shift);
+              vec_output[cur_azimuth]->Append(buf_temp, shift);
+            }
+            if (VAD_machine->vad_indicator[idx_ch] < 0) {
+              cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
+              printf("Close WAV for %d\n",cur_azimuth);
+              vec_output[cur_azimuth]->Normalize();
+              vec_output[cur_azimuth]->Finish();
+              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
+              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
+              emit(signal_process_done(vec_output[cur_azimuth]->GetFileName()));
+              VAD_machine->vad_indicator[idx_ch] = 0;
             }
           }
           break;
@@ -356,14 +381,36 @@ void processor::Algorithm(){
           CDR_IVA_MLDR(data);
           stft_out->istft(buf_data[0], buf_out);
           for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
+            int cur_azimuth = VAD_machine->ind2vad_1[idx_ch];
+            //Detect VAD on 
+            if (VAD_machine->vad_indicator[idx_ch] == 1) {
+              printf("Create WAV for %d\n",cur_azimuth);
+              if (vec_output[cur_azimuth]->GetIsOpen())
+                vec_output[cur_azimuth]->Finish();
+              std::string tmp_str = cur_time_str(cur_azimuth + 1);
+              vec_output[cur_azimuth]->NewFile(tmp_str);
+
+              VAD_machine->vad_indicator[idx_ch] = 0;
+            }
             // Append if speech is active
             if (VAD_machine->write_on[idx_ch]) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
-
-              vec_output[VAD_machine->ind2vad_1[idx_ch]]->Append(buf_temp, shift);
+              vec_output[cur_azimuth]->Append(buf_temp, shift);
             }
+            if (VAD_machine->vad_indicator[idx_ch] < 0) {
+              cur_azimuth = -VAD_machine->vad_indicator[idx_ch]-1;
+              printf("Close WAV for %d\n",cur_azimuth);
+              vec_output[cur_azimuth]->Normalize();
+              vec_output[cur_azimuth]->Finish();
+              //emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(), (int)(cur_azimuth/(cdr->nsource/ch_out))));
+              emit(signal_request_asr(vec_output[cur_azimuth]->GetFileName(),cur_azimuth%4 ));
+              emit(signal_process_done(vec_output[cur_azimuth]->GetFileName()));
+              VAD_machine->vad_indicator[idx_ch] = 0;
+            }
+
+
           }
           break;
 

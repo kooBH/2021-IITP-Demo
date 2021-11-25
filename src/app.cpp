@@ -65,7 +65,6 @@ app::app(){
     widget_ASR.setLayout(&layout_ASR);
     widget_ASR.setStyleSheet("\
 			QWidget{background:rgb(231, 234, 139);}\
-			QLabel{background:white;}\
       \
       ");
 
@@ -148,7 +147,7 @@ void app::slot_btn_play() {
    proc.device = static_cast<int>(get("Input/Output", "input_device"));
 
    /* CDR */
-   proc.CDR_nsource = static_cast<int>(get("CDR", "nousrce"));
+   proc.CDR_nsource = static_cast<int>(get("CDR", "nsource"));
    proc.CDR_smooth = get("CDR", "smooth");
    proc.CDR_mu= get("CDR", "mu");
    proc.CDR_Gmin= get("CDR", "Gmin");
@@ -156,6 +155,14 @@ void app::slot_btn_play() {
    proc.CDR_beta= get("CDR", "beta");
    proc.CDR_epsi= get("CDR", "epsi");
    proc.CDR_dist= get("CDR", "dist");
+
+   /* Label Tracker */
+
+   /* VAD State Machine */
+
+   /* OverIVA */
+
+   /* MLDR */
 
 
    proc.bool_init.store(true);

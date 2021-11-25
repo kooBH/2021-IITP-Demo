@@ -56,7 +56,9 @@ class processor : public QObject{
 
 
 		/* CDR_MLDR */
-		int len_buf = 30;
+		int len_buf = 200;
+		int pad_vad = 30;
+
 		CDR4proto* cdr4proto = nullptr;
 		Label_tracking4proto* label_tracker4proto = nullptr;
 		VADStateMachine4proto* VAD_machine4proto = nullptr;
