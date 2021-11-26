@@ -46,6 +46,7 @@ display_elements(MOC_TARGET ${SRC_Qt_MOC})
 		${PROJECT_SOURCE_DIR}/src/app.h
 		${PROJECT_SOURCE_DIR}/src/processor.h
 		${PROJECT_SOURCE_DIR}/src/WidgetConfig.h
+		${PROJECT_SOURCE_DIR}/src/WidgetASR.h
 	)	
 	
 	## sources without MetaObject 
@@ -53,6 +54,7 @@ display_elements(MOC_TARGET ${SRC_Qt_MOC})
 		${PROJECT_SOURCE_DIR}/src/app.cpp
 		${PROJECT_SOURCE_DIR}/src/processor.cpp
 		${PROJECT_SOURCE_DIR}/src/WidgetConfig.cpp
+		${PROJECT_SOURCE_DIR}/src/WidgetASR.cpp
 		)
 	
 	foreach(i  ${SRC_Qt_MOC})

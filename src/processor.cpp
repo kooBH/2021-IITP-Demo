@@ -258,7 +258,7 @@ void processor::Process() {
 
 
   output = new WAV(ch_in, samplerate);
-  output->NewFile("input.wav");
+ output->NewFile("input.wav");
   rt_input->Start();
   
   while (rt_input->IsRunning()) {
@@ -269,12 +269,12 @@ void processor::Process() {
       /* Scaling : input is two small */
       for (int i = 0; i < shift * ch_in; i++) {
         if (buf_in[i] > 0) {
-          buf_in[i] = std::min(buf_in[i] * 10, 32767);
+          buf_in[i] = std::min(int(buf_in[i] * scale_factor), 32767);
           if (buf_in[i] == 32767)
             printf("WARNNING::clipping 32767\n");
         }
         else {
-          buf_in[i] = std::max(buf_in[i] * 10, -32767);
+          buf_in[i] = std::max(int(buf_in[i] * scale_factor), -32767);
           if (buf_in[i] == -32767)
             printf("WARNNING::clipping -32767\n");
         }
@@ -378,7 +378,7 @@ void processor::Algorithm(){
               if (vec_output[cur_azimuth]->GetIsOpen())
                 vec_output[cur_azimuth]->Finish();
               std::string tmp_str = cur_time_str(cur_azimuth + 1);
-              vec_output[cur_azimuth]->NewFile(tmp_str);
+              vec_output[cur_azimuth]->NewFile("outputs/"+tmp_str);
 
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
@@ -410,7 +410,7 @@ void processor::Algorithm(){
               if (vec_output[cur_azimuth]->GetIsOpen())
                 vec_output[cur_azimuth]->Finish();
               std::string tmp_str = cur_time_str(cur_azimuth + 1);
-              vec_output[cur_azimuth]->NewFile(tmp_str);
+              vec_output[cur_azimuth]->NewFile("outputs/"+tmp_str);
 
               VAD_machine->vad_indicator[idx_ch] = 0;
             }

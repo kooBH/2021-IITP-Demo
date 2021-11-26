@@ -8,7 +8,7 @@
 
 #include "KAnalysis.h"
 #include "WidgetConfig.h"
-#include "KWidgetASR.h"
+#include "WidgetASR.h"
 
 #include "processor.h"
 
@@ -19,7 +19,6 @@ private:
   QVBoxLayout layout_main;
 
   QHBoxLayout layout_top;
-  QLabel label_top;
   QPushButton btn_play;
   QPushButton btn_load;
   QComboBox CB_algo;
@@ -27,12 +26,7 @@ private:
   QTabWidget widget_main;
   WidgetConfig widget_config;
   KAnalysis widget_disp;
-  QWidget widget_ASR;
-  QVBoxLayout layout_ASR;
-  KWidgetASR widget_ASR_1;
-  KWidgetASR widget_ASR_2;
-  KWidgetASR widget_ASR_3;
-  KWidgetASR widget_ASR_4;
+  WidgetASR widget_ASR;
 
   bool is_playing = false;
 

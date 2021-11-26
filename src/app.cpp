@@ -1,17 +1,18 @@
 #include "app.h"
 
 app::app(){
+
+
+
   setStyleSheet("\
 			QWidget{background:rgb(130, 227, 179);}\
       \
       ");
 
   /* top widget */{
-    layout_top.addWidget(&label_top);
     layout_top.addWidget(&btn_play);
     layout_top.addWidget(&btn_load);
     layout_top.addWidget(&CB_algo);
-    label_top.setText("Top");
     btn_play.setText("Play");
     btn_load.setText("Load");
 
@@ -41,7 +42,7 @@ app::app(){
 
   /* main widget */{
     widget_main.setStyleSheet("\
-			QWidget{background:rgb(95, 94, 116);}\
+			QWidget{background:rgb(130, 250, 179);}\
       \
       ");
 
@@ -62,16 +63,13 @@ app::app(){
     widget_config.Add("p1", "../config/param1.json");
     widget_config.Add("CDR", "../config/CDR.json");
 
-    widget_ASR.setLayout(&layout_ASR);
     widget_ASR.setStyleSheet("\
-			QWidget{background:rgb(231, 234, 139);}\
+			QToolButton{background:rgba(231, 234, 139);}\
+			QLabel{background:rgba(231, 234, 139);}\
+			QTextBrowser{background:rgba(222, 222, 222,50);}\
       \
       ");
 
-    layout_ASR.addWidget(&widget_ASR_1);
-    layout_ASR.addWidget(&widget_ASR_2);
-    layout_ASR.addWidget(&widget_ASR_3);
-    layout_ASR.addWidget(&widget_ASR_4);
 
     widget_main.addTab(&widget_ASR, "ASR");
 
@@ -93,14 +91,10 @@ app::app(){
   // spectrogram
   QObject::connect(&proc, &processor::signal_process_done, &widget_disp, &KAnalysis::LoadFile);
 
-  // ASR widget init
-  std::ifstream ifs("../private/config.json");
-  json j = json::parse(ifs);
-  std::cout << j.dump();
-  widget_ASR_1.Init(j["key1"].get<string>(),"korean");
-  widget_ASR_2.Init(j["key2"].get<string>(),"korean");
-  widget_ASR_3.Init(j["key3"].get<string>(),"korean");
-  widget_ASR_4.Init(j["key4"].get<string>(),"korean");
+
+  // Directory
+  if(!QDir("outputs").exists())
+    QDir().mkdir("outputs");
 };
 
 app::~app() {
@@ -177,16 +171,16 @@ void app::slot_btn_play() {
    widget_main.setCurrentIndex(2);
    switch (idx) {
    case 0 :
-     widget_ASR_1.Load(string(path));
+     widget_ASR.widget_ASR_1.Load(string(path));
      break;
    case 1:
-     widget_ASR_2.Load(string(path));
+     widget_ASR.widget_ASR_2.Load(string(path));
      break;
    case 2:
-     widget_ASR_3.Load(string(path));
+     widget_ASR.widget_ASR_3.Load(string(path));
      break;
    case 3:
-     widget_ASR_4.Load(string(path));
+     widget_ASR.widget_ASR_4.Load(string(path));
      break;
    }
    update();

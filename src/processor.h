@@ -129,6 +129,8 @@ class processor : public QObject{
 
 		int cnt = 0;
 
+		double scale_factor = 10;
+
 
 		/* CDR_IVA_MLDR */
 		double CDR_smooth=0.4;
