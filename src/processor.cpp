@@ -360,7 +360,7 @@ void processor::Algorithm(){
           stft_out->istft(buf_data[0], buf_out);
           for (int idx_ch = 0; idx_ch < ch_out; idx_ch++) {
             // Append if speech is active
-            if (VAD_machine4proto->write_on[idx_ch]) {
+            if (VAD_machine4proto->vad_on[idx_ch]) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
@@ -383,7 +383,7 @@ void processor::Algorithm(){
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
             // Append if speech is active
-            if (VAD_machine->write_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
+            if (VAD_machine->vad_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
@@ -415,7 +415,7 @@ void processor::Algorithm(){
               VAD_machine->vad_indicator[idx_ch] = 0;
             }
             // Append if speech is active
-            else if (VAD_machine->write_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
+            else if (VAD_machine->vad_on[idx_ch] && vec_output[cur_azimuth]->GetIsOpen()) {
               memset(buf_temp, 0, sizeof(short) * shift);
               for (int j = 0; j < shift; j++)
                 buf_temp[j] = buf_out[j * ch_out + idx_ch];
