@@ -34,3 +34,7 @@
 [submodule "algorithm/multi_source_CDR_IVA_MLDR"]
 	path = algorithm/multi_source_CDR_IVA_MLDR
 	url = https://github.com/bestjunh/multi_source_CDR_IVA_MLDR
+[submodule "algorithm/multi_source_CDR_MLDR"]
+	path = algorithm/multi_source_CDR_MLDR
+	url = https://github.com/bestjunh/multi_source_CDR_MLDR.git
+	branch = CxxProject
