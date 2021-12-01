@@ -116,7 +116,8 @@ void processor::init() {
       for (int j = 0; j < frame / 2 + 1; j++)
       {
         buf_mask[i][j] = new double[cdr4proto->nsource];
-        memset(buf_mask[i][j], 0.01, sizeof(double) * (cdr4proto->nsource));
+        for (int k = 0; k < cdr4proto->nsource; k++)
+            buf_mask[i][j][k] = p_init;
       }
     }
   }
@@ -172,8 +173,9 @@ void processor::init() {
       buf_mask[i] = new double* [frame / 2 + 1];
       for (int j = 0; j < frame / 2 + 1; j++)
       {
-        buf_mask[i][j] = new double[cdr->nsource];
-        memset(buf_mask[i][j], 0.01, sizeof(double) * (cdr->nsource));
+        buf_mask[i][j] = new double[cdr->nsource];        
+        for (int k = 0; k < cdr->nsource; k++)
+            buf_mask[i][j][k] = p_init;
       }
     }
   }
@@ -507,7 +509,7 @@ void processor::CDR_IVA_MLDR(double** data) {
   }
   for (int i = 0; i < frame / 2 + 1; i++){
     for (int j = 0; j < cdr->nsource; j++){
-      if (cdr->mask[i][j] > p_init){
+      if (cdr->mask[i][j] > p_thr){
         buf_mask[len_buf - 1][i][j] = cdr->mask[i][j];
       }
       else{
