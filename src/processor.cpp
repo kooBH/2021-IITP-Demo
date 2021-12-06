@@ -151,6 +151,7 @@ void processor::init() {
       ch_out,
       samplerate
     );
+    postfilter = new Postfilter(frame, ch_out);
     mldr = new MLDR(frame,
       shift,
       ch_in,
@@ -196,6 +197,7 @@ void processor::deinit() {
   _DEALLOC0(label_tracker);
   _DEALLOC0(VAD_machine);
   _DEALLOC0(overiva);
+  _DEALLOC0(postfilter);
   _DEALLOC0(mldr);
 
   _DEALLOC1(buf_in);
@@ -525,6 +527,8 @@ void processor::CDR_IVA_MLDR(double** data) {
   VAD_machine->Process(cdr->st_angle, label_tracker->LRT_val, label_tracker->ind2label, label_tracker->upcount, label_tracker->downcount, mldr->alpha_null_pre, mldr->alpha_null, cnt);
   overiva->Process(buf_data[0], mldr->W, buf_mask[0], VAD_machine->ind2vad_1);
   mldr->Process(buf_data[0], buf_mask[0], VAD_machine->ind2vad_1, VAD_machine->active_st, VAD_machine->State, overiva->A, overiva->W);
+  if(do_postfilter)
+    postfilter->Process(buf_data[0], buf_mask[0], VAD_machine->ind2vad_1);
 }
 
 

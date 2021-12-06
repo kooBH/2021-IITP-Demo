@@ -1,0 +1,7 @@
+{
+    "do": {
+        "default": false,
+        "type": "bool",
+        "value": true
+    }
+}

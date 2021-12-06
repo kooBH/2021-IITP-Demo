@@ -62,10 +62,11 @@ app::app(){
     widget_config.Add("Input/Output", "../config/io.json");
     widget_config.Add("p1", "../config/param1.json");
     widget_config.Add("CDR", "../config/CDR.json");
+    widget_config.Add("Postfilter", "../config/Postfilter.json");
 
     widget_ASR.setStyleSheet("\
-			QToolButton{background:rgba(231, 234, 139);}\
-			QLabel{background:rgba(231, 234, 139);}\
+			QToolButton{background:rgba(231, 234, 139,255);}\
+			QLabel{background:rgba(231, 234, 139,255);}\
 			QTextBrowser{background:rgba(222, 222, 222,50);}\
       \
       ");
@@ -150,6 +151,10 @@ void app::slot_btn_play() {
    proc.CDR_epsi= get("CDR", "epsi");
    proc.CDR_dist= get("CDR", "dist");
 
+   /* PostFilter */
+   proc.do_postfilter = get("Postfilter", "do");
+   printf("postfilter : %d\n", proc.do_postfilter);
+
    /* Label Tracker */
 
    /* VAD State Machine */
@@ -164,6 +169,7 @@ void app::slot_btn_play() {
 
  void app::slot_load(QString fileName){
    proc.init();
+   setProcParam();
    proc.Run(fileName.toStdString());
  }
 

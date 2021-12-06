@@ -15,6 +15,7 @@
 #include "Label_tracking.h"
 #include "VADStateMachine.h"
 #include "MLDR.h"
+#include "Postfilter.h"
 #include "OverIVA_Clique_RLS.h"
 
 #include <vector>
@@ -72,6 +73,7 @@ class processor : public QObject{
 		double p_thr = 0.7;
 		Label_tracking* label_tracker = nullptr;
 		VADStateMachine* VAD_machine = nullptr;
+		Postfilter* postfilter = nullptr;
 		OverIVA_Clique* overiva = nullptr;
 		MLDR* mldr = nullptr;
 
@@ -143,6 +145,7 @@ class processor : public QObject{
     double CDR_epsi=1e-10;
     double CDR_dist=0.043; // for UMA8 : 0.043, MEMS : 0.04
 
+		bool do_postfilter = false;
 
 		void init();
 		void deinit();
