@@ -153,7 +153,6 @@ void app::slot_btn_play() {
 
    /* PostFilter */
    proc.do_postfilter = get("Postfilter", "do");
-   printf("postfilter : %d\n", proc.do_postfilter);
 
    /* Label Tracker */
 

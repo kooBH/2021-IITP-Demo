@@ -50,7 +50,6 @@ void processor::init() {
   printf(" shift : %d\n", shift);
   printf(" cur_algorithm : %d\n", cur_algorithm);
 
-  rt_input = new RtInput(device,ch_in,samplerate,shift,frame);
   stft_in = new STFT(ch_in, frame, shift);
   stft_out = new STFT(ch_out, frame, shift);
 
@@ -256,6 +255,7 @@ void processor::CreateOutputs() {
 }
 
 void processor::Process() {
+  rt_input = new RtInput(device,ch_in,samplerate,shift,frame);
   atomic_thread.store(true);
 
   CreateOutputs();
