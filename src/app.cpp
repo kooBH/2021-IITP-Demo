@@ -54,10 +54,12 @@ app::app(){
 			QWidget{background:rgb(149, 234, 150);}\
 			QLineEdit{background:rgb(255, 255, 255);}\
 			QComboBox{background:rgb(255, 255, 255);}\
-      QCheckBox:indicator{background:rgb(210, 53, 50);border: 1px solid;}\
-      QCheckBox:indicator:checked{background:rgb(79,214,130); border: 1px solid;}\
       \
       ");
+
+      //QCheckBox:indicator{background:rgb(210, 53, 50);border: 1px solid;}\
+      //QCheckBox:indicator:checked{background:rgb(79,214,130); border: 1px solid;}\
+    
 
     widget_config.Add("Input/Output", "../config/io.json");
     widget_config.Add("p1", "../config/param1.json");
