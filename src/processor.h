@@ -69,8 +69,8 @@ class processor : public QObject{
 
 		CDR* cdr = nullptr;
 		int VAD_initial_noise = 10;
-		double p_init = 0.0;
-		double p_thr = 0.7;
+		double p_init = 0.0;// 0.0;
+		double p_thr = 0.3;//0.7;
 		Label_tracking* label_tracker = nullptr;
 		VADStateMachine* VAD_machine = nullptr;
 		Postfilter* postfilter = nullptr;

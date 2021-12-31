@@ -505,7 +505,7 @@ void processor::CDR_IVA_MLDR(double** data) {
   for (int k = 1; k < len_buf; k++){
     for (int i = 0; i < frame / 2 + 1; i++){
       for (int j = 0; j < cdr->nsource; j++){
-        buf_mask[k - 1][i][j] = buf_mask[k][i][j];
+        buf_mask[k - 1][i][j] = buf_mask[k][i][j];        
       }
     }
   }
@@ -513,6 +513,9 @@ void processor::CDR_IVA_MLDR(double** data) {
     for (int j = 0; j < cdr->nsource; j++){
       if (cdr->mask[i][j] > p_thr){
         buf_mask[len_buf - 1][i][j] = cdr->mask[i][j];
+        if (cdr->mask[i][j] > 0.7) {
+            buf_mask[len_buf - 1][i][j] = 1.0;
+        }
       }
       else{
         buf_mask[len_buf - 1][i][j] = p_init;
