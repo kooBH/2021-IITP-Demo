@@ -132,8 +132,9 @@ class processor : public QObject{
 
 		int cnt = 0;
 
-		double scale_factor = 5; //FPGA board
-		//double scale_factor = 10; //UMA-8
+		//double scale_factor = 5; //FPGA board
+		double scale_factor = 10; //UMA-8
+		//double scale_factor = 0.66; //UMA-8 2
 
 
 		/* CDR_IVA_MLDR */

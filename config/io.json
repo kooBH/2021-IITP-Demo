@@ -5,11 +5,11 @@
     },
     "input_device": {
         "type": "int",
-        "value": 10
+        "value": 11
     },
     "output_device": {
         "type": "int",
-        "value": 0
+        "value": 5
     },
     "samplerate": {
         "options": [

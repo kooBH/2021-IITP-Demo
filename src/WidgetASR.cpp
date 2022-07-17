@@ -23,10 +23,10 @@ WidgetASR::WidgetASR() {
     // ASR widget init
     std::ifstream ifs("../private/config.json");
     json j = json::parse(ifs);
-    widget_ASR_1.Init(j["key1"].get<string>(),"english");
-    widget_ASR_2.Init(j["key2"].get<string>(),"english");
-    widget_ASR_3.Init(j["key3"].get<string>(),"english");
-    widget_ASR_4.Init(j["key4"].get<string>(),"english");
+    widget_ASR_1.Init(j["key1"].get<string>(),"korean");
+    widget_ASR_2.Init(j["key2"].get<string>(),"korean");
+    widget_ASR_3.Init(j["key3"].get<string>(),"korean");
+    widget_ASR_4.Init(j["key4"].get<string>(),"korean");
 
     pixmap_bkgnd.load("../res/background.png");
 }
